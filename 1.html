@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>點名與出席統計</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:#131923;
+      --muted:#8aa0b4;
+      --text:#e8eef5;
+      --accent:#5bd1ff;
+      --accent-2:#6ee7a2;
+      --danger:#ff6b6b;
+      --warn:#ffbf69;
+      --border:#233043;
+      --chip:#1e2a3b;
+      --input:#0f1520;
+      --shadow: 0 6px 18px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Heiti TC", Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 70% -10%, #142033 0%, #0b0f14 40%, #0b0f14 100%);
+      color:var(--text);
+    }
+    a{color:var(--accent);text-decoration:none}
+    header{
+      position:sticky; top:0; z-index:20;
+      background: rgba(11,15,20,.7);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1100px;margin:0 auto;padding:12px 16px}
+    h1{font-size:20px;margin:0}
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap; margin-top:10px
+    }
+    .tab-btn{
+      padding:8px 12px; border:1px solid var(--border); background:var(--card);
+      color:var(--text); border-radius:10px; cursor:pointer;
+    }
+    .tab-btn.active{outline:2px solid var(--accent); color:#00151c; background: linear-gradient(180deg, #b8f1ff, #7bdfff)}
+    .container{max-width:1100px;margin:12px auto;padding:0 16px 120px}
+    .grid{
+      display:grid; gap:12px;
+      grid-template-columns: repeat(12,1fr);
+    }
+    .col-12{grid-column: span 12}
+    .col-8{grid-column: span 8}
+    .col-4{grid-column: span 4}
+    @media (max-width:900px){ .col-8{grid-column: span 12} .col-4{grid-column: span 12} }
+    .card{
+      background:linear-gradient(180deg, #111826 0%, #0f1723 60%, #0e1622 100%);
+      border:1px solid var(--border); border-radius:16px; box-shadow: var(--shadow); overflow:hidden;
+    }
+    .card h2{font-size:18px;margin:0 0 12px}
+    .card .body{padding:14px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1}
+    label{font-size:12px;color:var(--muted)}
+    input,select,textarea{
+      width:100%; padding:10px 12px; background:var(--input); color:var(--text);
+      border:1px solid var(--border); border-radius:10px; outline:none;
+    }
+    textarea{min-height:72px; resize:vertical}
+    button{
+      padding:10px 14px; border-radius:10px; border:1px solid var(--border);
+      background:linear-gradient(180deg, #1a2636, #152030); color:var(--text); cursor:pointer;
+    }
+    button.primary{background:linear-gradient(180deg, #35c3ff, #1aa6e8); border:none; color:#00111a}
+    button.ghost{background:transparent}
+    button.warn{background:linear-gradient(180deg, #ffd36b, #ffb24d); color:#3a2500; border:none}
+    button.danger{background:linear-gradient(180deg, #ff8b8b, #ff6b6b); color:#2b0000; border:none}
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+    .list{display:flex; flex-direction:column}
+    .item{
+      display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center;
+      padding:10px 12px; border-bottom:1px dashed var(--border);
+    }
+    .item:last-child{border-bottom:none}
+    .meta{font-size:12px;color:var(--muted)}
+    .chip{display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; background:var(--chip); border:1px solid var(--border); font-size:12px}
+    .chip.green{background:rgba(110,231,162,.12); border-color:#2e7d59; color:#b5f3cd}
+    .chip.blue{background:rgba(91,209,255,.12); border-color:#2c6278; color:#b9eeff}
+    .chip.orange{background:rgba(255,191,105,.12); border-color:#7a5a24; color:#ffe1b3}
+    .pill-group{display:flex; gap:6px; flex-wrap:wrap}
+    .right{justify-self:end}
+    .section-title{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px}
+    .hr{height:1px; background:var(--border); margin:8px 0}
+    .table{width:100%; border-collapse:collapse}
+    .table th,.table td{padding:8px; border-bottom:1px solid var(--border); text-align:left}
+    .kpi{display:flex; gap:12px; flex-wrap:wrap}
+    .kpi .box{
+      background:linear-gradient(180deg, #132236, #101a2b);
+      border:1px solid var(--border); border-radius:14px; padding:10px 12px; min-width:120px
+    }
+    .box .big{font-size:22px; font-weight:700}
+    .muted{color:var(--muted)}
+    .space{height:8px}
+    .sticky-footer{
+      position:fixed; bottom:0; left:0; right:0; z-index:10;
+      background:rgba(11,15,20,.8); backdrop-filter: blur(8px);
+      border-top:1px solid var(--border)
+    }
+    .footer-wrap{max-width:1100px;margin:0 auto; padding:10px 16px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+    .nowrap{white-space:nowrap}
+    .small{font-size:12px}
+    .danger-link{color:#ff9b9b; cursor:pointer}
+    .hint{font-size:12px; color:var(--muted)}
+    .search-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .toggle{display:inline-flex; align-items:center; gap:6px}
+    .toggle input{width:auto}
+    .empty{
+      padding:18px; text-align:center; color:var(--muted)
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>點名與出席統計</h1>
+      <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="attendance">點名</button>
+        <button class="tab-btn" data-tab="events">活動</button>
+        <button class="tab-btn" data-tab="participants">參與者</button>
+        <button class="tab-btn" data-tab="stats">統計</button>
+        <button class="tab-btn" data-tab="backup">備份/匯入</button>
+        <span class="muted small" id="saveStatus"></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 點名 -->
+    <section id="tab-attendance" class="card">
+      <div class="body">
+        <div class="section-title">
+          <h2>進行點名</h2>
+          <div class="toolbar">
+            <button id="btnNewEvent" class="ghost">+ 新增活動</button>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>選擇活動</label>
+            <select id="attEventSelect"></select>
+          </div>
+          <div class="field">
+            <label>依身份篩選</label>
+            <select id="attRoleFilter">
+              <option value="">全部身份</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>搜尋參與者（姓名或備註）</label>
+            <input id="attSearch" placeholder="輸入關鍵字" />
+          </div>
+        </div>
+
+        <div class="space"></div>
+        <div id="attList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- 活動管理 -->
+    <section id="tab-events" class="card" style="display:none">
+      <div class="body">
+        <div class="section-title">
+          <h2>活動管理</h2>
+          <div class="toolbar">
+            <button id="btnAddEvent" class="primary">+ 新增活動</button>
+          </div>
+        </div>
+
+        <div id="eventList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- 參與者管理 -->
+    <section id="tab-participants" class="card" style="display:none">
+      <div class="body">
+        <div class="section-title">
+          <h2>參與者管理</h2>
+          <div class="toolbar">
+            <button id="btnAddParticipant" class="primary">+ 新增參與者</button>
+          </div>
+        </div>
+
+        <div class="search-row">
+          <input id="pSearch" placeholder="搜尋姓名、身份、備註" />
+          <select id="pRoleFilter">
+            <option value="">全部身份</option>
+          </select>
+          <div class="toggle"><input type="checkbox" id="pOnlyActive" checked /> <label for="pOnlyActive">只顯示啟用</label></div>
+        </div>
+        <div class="space"></div>
+        <div id="participantList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- 統計 -->
+    <section id="tab-stats" class="card" style="display:none">
+      <div class="body">
+        <div class="section-title">
+          <h2>統計</h2>
+          <div class="toolbar">
+            <select id="statsEventSelect">
+              <option value="">全部活動</option>
+            </select>
+            <select id="statsRoleSelect">
+              <option value="">全部身份</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <div class="box">
+            <div class="muted small">總活動數</div>
+            <div class="big" id="kpiEvents">0</div>
+          </div>
+          <div class="box">
+            <div class="muted small">總參與者數</div>
+            <div class="big" id="kpiParticipants">0</div>
+          </div>
+          <div class="box">
+            <div class="muted small">總出席紀錄</div>
+            <div class="big" id="kpiAttendances">0</div>
+          </div>
+        </div>
+        <div class="space"></div>
+
+        <div class="grid">
+          <div class="col-8">
+            <div class="card">
+              <div class="body">
+                <div class="section-title">
+                  <h3>活動出席概況</h3>
+                </div>
+                <div id="statsEventBreakdown" class="list"></div>
+              </div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="card">
+              <div class="body">
+                <div class="section-title">
+                  <h3>個人出席次數排行榜</h3>
+                </div>
+                <table class="table" id="statsTop"></table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 備份/匯入 -->
+    <section id="tab-backup" class="card" style="display:none">
+      <div class="body">
+        <div class="section-title">
+          <h2>備份與匯入</h2>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label>匯出 JSON</label>
+            <button id="btnExport" class="primary">下載備份檔</button>
+            <div class="hint">將目前所有資料（活動、參與者、出席）匯出為 JSON 檔。</div>
+          </div>
+          <div class="field">
+            <label>匯入 JSON</label>
+            <input type="file" id="fileImport" accept="application/json" />
+            <div class="hint">匯入會覆蓋現有資料。建議先匯出備份。</div>
+          </div>
+          <div class="field">
+            <label>清除所有資料</label>
+            <button id="btnReset" class="danger">清空資料庫</button>
+            <div class="hint">不可復原，請謹慎操作。</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="sticky-footer">
+    <div class="footer-wrap">
+      <div class="toolbar">
+        <span class="chip blue">本機儲存</span>
+        <span class="small muted">資料存於此裝置的瀏覽器，無需網路</span>
+      </div>
+      <div class="toolbar">
+        <span class="small muted">快速鍵：/ 搜尋、s 儲存、n 新增、1-5 切換分頁</span>
+      </div>
+    </div>
+  </div>
+
+  <template id="tpl-att-item">
+    <div class="item">
+      <div>
+        <div class="row" style="align-items:center; gap:10px">
+          <label class="toggle"><input type="checkbox" class="att-check" /> 出席</label>
+          <span class="chip"><span class="name"></span></span>
+          <span class="chip green role"></span>
+          <span class="muted small note"></span>
+        </div>
+      </div>
+      <div class="right pill-group">
+        <span class="chip blue onceCount"></span>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-event-item">
+    <div class="item">
+      <div>
+        <div><strong class="e-name"></strong> <span class="muted">· </span><span class="muted e-date"></span></div>
+        <div class="meta e-desc"></div>
+      </div>
+      <div class="right pill-group">
+        <span class="chip blue"><span class="e-attend-count">0</span> 人出席</span>
+        <button class="ghost btnEdit">編輯</button>
+        <button class="ghost danger-link btnDelete">刪除</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-participant-item">
+    <div class="item">
+      <div>
+        <div><strong class="p-name"></strong> <span class="chip green p-role"></span></div>
+        <div class="meta p-note"></div>
+      </div>
+      <div class="right pill-group">
+        <span class="chip blue"><span class="p-count">0</span> 場</span>
+        <label class="toggle"><input type="checkbox" class="p-active" /> 啟用</label>
+        <button class="ghost btnEdit">編輯</button>
+        <button class="ghost danger-link btnDelete">刪除</button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // --- 簡易資料層 ---
+    const DB_KEY = 'attendance_app_v1';
+
+    const initialState = {
+      roles: ['學生','老師','助教','工作人員'],
+      participants: [
+        {id:'p1', name:'王小明', role:'學生', note:'一年級', active:true},
+        {id:'p2', name:'李老師', role:'老師', note:'數學', active:true},
+        {id:'p3', name:'陳助教', role:'助教', note:'', active:true},
+      ],
+      events: [
+        {id:'e1', name:'開學典禮', date: new Date().toISOString().slice(0,10), desc:'體育館', attendees: ['p1','p2']},
+        {id:'e2', name:'數學社聚會', date: new Date(Date.now()+86400000).toISOString().slice(0,10), desc:'社辦', attendees: []},
+      ],
+      // 方便擴充：可加入出席狀態、時間戳
+    };
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(DB_KEY);
+        if(!raw){ return JSON.parse(JSON.stringify(initialState)); }
+        const s = JSON.parse(raw);
+        // 兼容：補缺欄位
+        s.roles ||= initialState.roles.slice();
+        s.participants ||= [];
+        s.events ||= [];
+        return s;
+      }catch(e){
+        console.error('Load error', e);
+        return JSON.parse(JSON.stringify(initialState));
+      }
+    }
+
+    let state = loadState();
+
+    function saveState(debounced=true){
+      localStorage.setItem(DB_KEY, JSON.stringify(state));
+      setSaveStatus('已儲存');
+      if(debounced){
+        clearTimeout(window.__saveTimer);
+        window.__saveTimer = setTimeout(()=> setSaveStatus(''), 1200);
+      }
+      renderAll();
+    }
+
+    function setSaveStatus(text){
+      document.getElementById('saveStatus').textContent = text || '';
+    }
+
+    function uid(prefix='id'){
+      return prefix + Math.random().toString(36).slice(2,9);
+    }
+
+    // --- 渲染與 UI ---
+    const tabs = document.getElementById('tabs').querySelectorAll('.tab-btn');
+    const sections = {
+      attendance: document.getElementById('tab-attendance'),
+      events: document.getElementById('tab-events'),
+      participants: document.getElementById('tab-participants'),
+      stats: document.getElementById('tab-stats'),
+      backup: document.getElementById('tab-backup'),
+    };
+
+    tabs.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        tabs.forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const key = btn.dataset.tab;
+        Object.entries(sections).forEach(([k,el])=>{
+          el.style.display = (k===key)?'':'none';
+        });
+        if(key==='attendance'){ focusSearch('attSearch'); }
+        if(key==='participants'){ focusSearch('pSearch'); }
+        renderAll();
+      });
+    });
+
+    // 快速鍵
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === '/' && !isTyping(e.target)){ e.preventDefault(); focusSearch(); }
+      if(e.key === 's' && (e.metaKey||e.ctrlKey)){ e.preventDefault(); saveState(false); }
+      if(e.key === 'n'){ // 新增
+        const active = document.querySelector('.tab-btn.active')?.dataset.tab;
+        if(active==='events') addEventDialog();
+        if(active==='participants') addParticipantDialog();
+      }
+      const idx = parseInt(e.key,10);
+      if(idx>=1 && idx<=5){ tabs[idx-1].click(); }
+    });
+
+    function isTyping(el){ return ['INPUT','TEXTAREA','SELECT'].includes(el.tagName); }
+    function focusSearch(id){
+      const el = document.getElementById(id || (document.querySelector('.tab-btn.active')?.dataset.tab==='participants'?'pSearch':'attSearch'));
+      if(el){ el.focus(); el.select?.(); }
+    }
+
+    // 下拉選單資料
+    function refreshRoleOptions(){
+      const roleSelects = [document.getElementById('attRoleFilter'), document.getElementById('pRoleFilter'), document.getElementById('statsRoleSelect')];
+      roleSelects.forEach(sel=>{
+        const keepFirst = sel.id!=='attRoleFilter' && sel.id!=='pRoleFilter' ? true : false;
+      });
+      // 逐個填入
+      const fill = (sel, includeAll=true)=>{
+        const v = sel.value;
+        sel.innerHTML = includeAll?'<option value="">全部身份</option>':'';
+        state.roles.forEach(r=>{
+          const opt = document.createElement('option');
+          opt.value = r; opt.textContent = r;
+          sel.appendChild(opt);
+        });
+        sel.value = v || '';
+      };
+      fill(document.getElementById('attRoleFilter'), true);
+      fill(document.getElementById('pRoleFilter'), true);
+      // statsRoleSelect: 也提供全部
+      (()=>{ const sel = document.getElementById('statsRoleSelect'); const v = sel.value; sel.innerHTML='<option value="">全部身份</option>'; state.roles.forEach(r=>{ const o=document.createElement('option'); o.value=r;o.textContent=r; sel.appendChild(o);}); sel.value=v||''; })();
+    }
+
+    function refreshEventOptions(){
+      const sels = [document.getElementById('attEventSelect'), document.getElementById('statsEventSelect')];
+      sels.forEach(sel=>{
+        const cur = sel.value;
+        sel.innerHTML = sel.id==='statsEventSelect' ? '<option value="">全部活動</option>' : '';
+        state.events
+          .slice()
+          .sort((a,b)=> (a.date||'').localeCompare(b.date))
+          .forEach(ev=>{
+            const opt = document.createElement('option');
+            opt.value = ev.id;
+            opt.textContent = `${ev.date || '未定'} · ${ev.name}`;
+            sel.appendChild(opt);
+          });
+        sel.value = cur || sels[0].querySelector('option')?.value || '';
+      });
+    }
+
+    // 渲染：點名頁
+    function renderAttendance(){
+      refreshEventOptions();
+      refreshRoleOptions();
+      const evId = document.getElementById('attEventSelect').value || state.events[0]?.id;
+      if(!evId){ document.getElementById('attList').innerHTML = '<div class="empty">尚無活動，請先新增。</div>'; return; }
+      const ev = state.events.find(e=>e.id===evId);
+      const attendeesSet = new Set(ev.attendees||[]);
+      const keyword = document.getElementById('attSearch').value.trim().toLowerCase();
+      const roleFilter = document.getElementById('attRoleFilter').value;
+
+      const list = document.getElementById('attList');
+      list.innerHTML = '';
+      const participants = state.participants
+        .filter(p=>p.active!==false)
+        .filter(p=> !roleFilter || p.role===roleFilter)
+        .filter(p=>{
+          if(!keyword) return true;
+          return (p.name||'').toLowerCase().includes(keyword)
+            || (p.note||'').toLowerCase().includes(keyword)
+            || (p.role||'').toLowerCase().includes(keyword)
+        })
+        .sort((a,b)=> (a.role||'').localeCompare(b.role||'') || (a.name||'').localeCompare(b.name||''));
+
+      if(participants.length===0){
+        list.innerHTML = '<div class="empty">沒有符合條件的參與者。</div>';
+        return;
+      }
+
+      const tpl = document.getElementById('tpl-att-item');
+      participants.forEach(p=>{
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        node.querySelector('.name').textContent = p.name;
+        node.querySelector('.role').textContent = p.role || '未設定';
+        node.querySelector('.note').textContent = p.note || '';
+        node.querySelector('.onceCount').textContent = attendeesSet.has(p.id) ? '已勾選' : '未勾選';
+        const chk = node.querySelector('.att-check');
+        chk.checked = attendeesSet.has(p.id);
+        chk.addEventListener('change', ()=>{
+          const set = new Set(ev.attendees||[]);
+          if(chk.checked){ set.add(p.id); } else { set.delete(p.id); }
+          ev.attendees = Array.from(set);
+          saveState();
+        });
+        list.appendChild(node);
+      });
+    }
+
+    // 渲染：活動管理
+    function renderEvents(){
+      refreshEventOptions();
+      const list = document.getElementById('eventList');
+      list.innerHTML = '';
+      const tpl = document.getElementById('tpl-event-item');
+      state.events
+        .slice()
+        .sort((a,b)=> (a.date||'').localeCompare(b.date))
+        .forEach(ev=>{
+          const node = tpl.content.firstElementChild.cloneNode(true);
+          node.querySelector('.e-name').textContent = ev.name||'未命名';
+          node.querySelector('.e-date').textContent = ev.date || '未定日期';
+          node.querySelector('.e-desc').textContent = ev.desc || '';
+          node.querySelector('.e-attend-count').textContent = (ev.attendees||[]).length;
+          node.querySelector('.btnEdit').addEventListener('click', ()=> editEventDialog(ev.id));
+          node.querySelector('.btnDelete').addEventListener('click', ()=> deleteEvent(ev.id));
+          list.appendChild(node);
+        });
+      if(!list.children.length){
+        list.innerHTML = '<div class="empty">尚無活動，點擊「新增活動」建立。</div>';
+      }
+    }
+
+    // 渲染：參與者管理
+    function renderParticipants(){
+      refreshRoleOptions();
+      const list = document.getElementById('participantList');
+      list.innerHTML = '';
+      const q = document.getElementById('pSearch').value.trim().toLowerCase();
+      const role = document.getElementById('pRoleFilter').value;
+      const onlyActive = document.getElementById('pOnlyActive').checked;
+
+      const tpl = document.getElementById('tpl-participant-item');
+      const participants = state.participants
+        .filter(p=> !role || p.role===role)
+        .filter(p=> !onlyActive || p.active!==false)
+        .filter(p=>{
+          if(!q) return true;
+          return [p.name, p.role, p.note].some(s=> (s||'').toLowerCase().includes(q));
+        })
+        .sort((a,b)=> (a.role||'').localeCompare(b.role||'') || (a.name||'').localeCompare(b.name||''));
+
+      participants.forEach(p=>{
+        const node = tpl.content.firstElementChild.cloneNode(true);
+        node.querySelector('.p-name').textContent = p.name;
+        node.querySelector('.p-role').textContent = p.role || '未設定';
+        node.querySelector('.p-note').textContent = p.note || '';
+        node.querySelector('.p-count').textContent = (state.events||[]).filter(ev=> (ev.attendees||[]).includes(p.id)).length;
+        const chk = node.querySelector('.p-active');
+        chk.checked = p.active!==false;
+        chk.addEventListener('change', ()=>{ p.active = chk.checked; saveState(); });
+        node.querySelector('.btnEdit').addEventListener('click', ()=> editParticipantDialog(p.id));
+        node.querySelector('.btnDelete').addEventListener('click', ()=> deleteParticipant(p.id));
+        list.appendChild(node);
+      });
+      if(!list.children.length){
+        list.innerHTML = '<div class="empty">沒有符合條件的參與者。</div>';
+      }
+    }
+
+    // 渲染：統計
+    function renderStats(){
+      refreshEventOptions();
+      refreshRoleOptions();
+      const role = document.getElementById('statsRoleSelect').value;
+      const eventId = document.getElementById('statsEventSelect').value;
+
+      const events = state.events.slice();
+      const participants = state.participants.slice();
+
+      // KPI
+      document.getElementById('kpiEvents').textContent = events.length;
+      document.getElementById('kpiParticipants').textContent = participants.length;
+      const totalAttendances = events.reduce((acc,ev)=> acc + (ev.attendees?.length||0), 0);
+      document.getElementById('kpiAttendances').textContent = totalAttendances;
+
+      // 活動出席概況
+      const container = document.getElementById('statsEventBreakdown');
+      container.innerHTML = '';
+      const showEvents = eventId ? events.filter(e=>e.id===eventId) : events;
+      if(showEvents.length===0){ container.innerHTML = '<div class="empty">尚無活動。</div>'; }
+
+      showEvents
+        .slice()
+        .sort((a,b)=> (a.date||'').localeCompare(b.date))
+        .forEach(ev=>{
+          const attendeeObjs = (ev.attendees||[])
+            .map(pid=> participants.find(p=>p.id===pid))
+            .filter(Boolean)
+            .filter(p=> !role || p.role===role);
+          const count = attendeeObjs.length;
+          const byRole = {};
+          attendeeObjs.forEach(p=> { byRole[p.role] = (byRole[p.role]||0) + 1; });
+
+          const div = document.createElement('div');
+          div.className = 'item';
+          const right = document.createElement('div');
+          right.className = 'right pill-group';
+          right.innerHTML = `<span class="chip blue">${count} 人出席</span>`;
+          const left = document.createElement('div');
+          left.innerHTML = `<div><strong>${ev.name}</strong> <span class="muted">· ${ev.date||'未定日期'}</span></div><div class="meta">${ev.desc||''}</div>`;
+          const roleChips = document.createElement('div'); roleChips.className='pill-group'; roleChips.style.marginTop='6px';
+          Object.entries(byRole).forEach(([r,c])=>{
+            const chip = document.createElement('span'); chip.className='chip green'; chip.textContent = `${r}: ${c}`;
+            roleChips.appendChild(chip);
+          });
+          left.appendChild(roleChips);
+          div.appendChild(left); div.appendChild(right);
+          container.appendChild(div);
+        });
+
+      // 個人出席排行榜
+      const tbody = document.getElementById('statsTop');
+      tbody.innerHTML = '';
+      const counts = participants
+        .filter(p=> !role || p.role===role)
+        .map(p=> ({ p, count: events.filter(ev=> (ev.attendees||[]).includes(p.id)).length }))
+        .filter(x=> x.count>0)
+        .sort((a,b)=> b.count - a.count || a.p.name.localeCompare(b.p.name))
+        .slice(0,50);
+      const header = document.createElement('tr');
+      header.innerHTML = '<th>姓名</th><th>身份</th><th>出席次數</th>';
+      tbody.appendChild(header);
+      if(counts.length===0){
+        const tr = document.createElement('tr'); tr.innerHTML = '<td colspan="3" class="muted">尚無出席紀錄</td>'; tbody.appendChild(tr);
+      }else{
+        counts.forEach(({p,count})=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${p.name}</td><td>${p.role||''}</td><td>${count}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
+    function renderAll(){
+      const active = document.querySelector('.tab-btn.active')?.dataset.tab;
+      if(active==='attendance') renderAttendance();
+      if(active==='events') renderEvents();
+      if(active==='participants') renderParticipants();
+      if(active==='stats') renderStats();
+      if(active==='backup'){} // no-op
+    }
+
+    // 事件綁定
+    document.getElementById('attEventSelect').addEventListener('change', renderAttendance);
+    document.getElementById('attRoleFilter').addEventListener('change', renderAttendance);
+    document.getElementById('attSearch').addEventListener('input', renderAttendance);
+
+    document.getElementById('pSearch').addEventListener('input', renderParticipants);
+    document.getElementById('pRoleFilter').addEventListener('change', renderParticipants);
+    document.getElementById('pOnlyActive').addEventListener('change', renderParticipants);
+
+    document.getElementById('statsEventSelect').addEventListener('change', renderStats);
+    document.getElementById('statsRoleSelect').addEventListener('change', renderStats);
+
+    document.getElementById('btnNewEvent').addEventListener('click', ()=> {
+      tabs.forEach(b=>b.classList.remove('active'));
+      document.querySelector('[data-tab="events"]').classList.add('active');
+      Object.entries(sections).forEach(([k,el])=> el.style.display = (k==='events')?'':'none');
+      addEventDialog();
+    });
+
+    document.getElementById('btnAddEvent').addEventListener('click', addEventDialog);
+    document.getElementById('btnAddParticipant').addEventListener('click', addParticipantDialog);
+
+    // 備份/匯入/重置
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], {type:'application/json;charset=utf-8'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `attendance-backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click(); URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById('fileImport').addEventListener('change', async (e)=>{
+      const file = e.target.files?.[0];
+      if(!file) return;
+      if(!confirm('匯入將覆蓋現有資料，確定繼續？')) return;
+      try{
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if(!data || !Array.isArray(data.participants) || !Array.isArray(data.events)){
+          alert('檔案格式不正確');
+          return;
+        }
+        state = data;
+        saveState();
+        alert('匯入完成');
+      }catch(err){
+        console.error(err);
+        alert('匯入失敗：' + err.message);
+      }finally{
+        e.target.value = '';
+      }
+    });
+
+    document.getElementById('btnReset').addEventListener('click', ()=>{
+      if(confirm('確定要清空所有資料嗎？此動作無法復原。')){
+        state = JSON.parse(JSON.stringify(initialState));
+        saveState();
+      }
+    });
+
+    // CRUD 對話框（使用 prompt/confirm 簡化，亦可改成自製 modal）
+    function addEventDialog(){
+      const name = prompt('活動名稱：');
+      if(!name) return;
+      const date = prompt('日期（YYYY-MM-DD，可留空）：', new Date().toISOString().slice(0,10)) || '';
+      const desc = prompt('說明（可留空）：', '') || '';
+      state.events.push({id: uid('e'), name, date, desc, attendees: []});
+      saveState();
+    }
+    function editEventDialog(id){
+      const ev = state.events.find(e=>e.id===id); if(!ev) return;
+      const name = prompt('活動名稱：', ev.name);
+      if(name===null) return;
+      const date = prompt('日期（YYYY-MM-DD，可留空）：', ev.date||'') ?? ev.date;
+      const desc = prompt('說明（可留空）：', ev.desc||'') ?? ev.desc;
+      ev.name = name || ev.name;
+      ev.date = date || '';
+      ev.desc = desc || '';
+      saveState();
+    }
+    function deleteEvent(id){
+      const ev = state.events.find(e=>e.id===id);
+      if(!ev) return;
+      if(!confirm(`確定刪除活動「${ev.name}」？`)) return;
+      state.events = state.events.filter(e=>e.id!==id);
+      saveState();
+    }
+
+    function addParticipantDialog(){
+      const name = prompt('姓名：');
+      if(!name) return;
+      const role = prompt(`身份（建議使用以下之一：${state.roles.join('、')}）。可自訂：`, state.roles[0]) || '';
+      const note = prompt('備註（可留空）：', '') || '';
+      const p = {id: uid('p'), name, role, note, active:true};
+      if(!state.roles.includes(role) && role){ state.roles.push(role); }
+      state.participants.push(p);
+      saveState();
+    }
+    function editParticipantDialog(id){
+      const p = state.participants.find(x=>x.id===id); if(!p) return;
+      const name = prompt('姓名：', p.name);
+      if(name===null) return;
+      const role = prompt(`身份（建議使用以下之一：${state.roles.join('、')}）。可自訂：`, p.role||'') ?? p.role;
+      const note = prompt('備註（可留空）：', p.note||'') ?? p.note;
+      p.name = name || p.name;
+      p.role = role || '';
+      p.note = note || '';
+      if(role && !state.roles.includes(role)) state.roles.push(role);
+      saveState();
+    }
+    function deleteParticipant(id){
+      const p = state.participants.find(x=>x.id===id); if(!p) return;
+      if(!confirm(`確定刪除參與者「${p.name}」？此動作也會從各活動出席名單移除。`)) return;
+      state.participants = state.participants.filter(x=>x.id!==id);
+      state.events.forEach(ev=> ev.attendees = (ev.attendees||[]).filter(pid=>pid!==id));
+      saveState();
+    }
+
+    // 初始渲染
+    renderAll();
+  </script>
+</body>
+</html>
